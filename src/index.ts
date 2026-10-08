@@ -25,6 +25,30 @@ const textResult = (text: string, isError = false) => ({
 });
 
 server.tool(
+  "brain-folders",
+  {},
+  async () => {
+    const existing = notes.listFolders();
+    const required = folders.filter(folder => !existing.some(name => name.toLowerCase() === folder.toLowerCase()));
+    const created = required.filter(folder => notes.ensureFolder(folder));
+    return textResult(JSON.stringify({
+      requiredFolders: folders,
+      existingFolders: existing,
+      createdFolders: created
+    }, null, 2));
+  }
+);
+
+server.tool(
+  "brain-note-id",
+  { title: z.string().min(1) },
+  async ({ title }) => {
+    const id = notes.getNoteId(title);
+    return id ? textResult(id) : textResult(`Note not found: "${title}"`, true);
+  }
+);
+
+server.tool(
   "brain-search",
   {
     query: z.string().min(1),
