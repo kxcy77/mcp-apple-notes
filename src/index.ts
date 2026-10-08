@@ -137,11 +137,15 @@ server.tool(
   "brain-update",
   {
     title: z.string().min(1),
+    id: z.string().optional(),
     content: z.string().min(1)
   },
-  async ({ title, content }) => {
-    return notes.updateNote(title, content)
-      ? textResult(`Brain entry updated: "${title}"`)
+  async ({ title, id, content }) => {
+    const updated = id
+      ? notes.updateNoteById(id, content)
+      : notes.updateNote(title, content);
+    return updated
+      ? textResult(`Brain entry updated: "${title}"${id ? ` (ID: ${id})` : ""}`)
       : textResult(`Failed to update Brain entry: "${title}"`, true);
   }
 );
