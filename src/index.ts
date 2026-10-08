@@ -187,7 +187,7 @@ server.tool(
     contextPercent: z.number().min(0).max(100),
     threshold: z.number().min(1).max(100).default(30)
   },
-  async ({ contextPercent, threshold }) => {
+  async ({ contextPercent, threshold }: any) => {
     const shouldCompact = contextPercent >= threshold;
     return textResult(JSON.stringify({
       contextPercent,
