@@ -91,7 +91,7 @@ end tell`;
 
   searchNotes(query: string, folder?: string, limit = 25): Note[] {
     const script = `tell application "Notes"
-  tell account \${appleScriptString(ICLOUD_ACCOUNT)}
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
     set outputText to ""
     repeat with n in notes
       set noteName to name of n as text
@@ -99,7 +99,7 @@ end tell`;
       set targetFolder to name of container of n as text
       set noteId to id of n as text
       ignoring case
-        if (noteName contains \${appleScriptString(query)}) or (noteBody contains \${appleScriptString(query)}) then
+        if (noteName contains ${appleScriptString(query)}) or (noteBody contains ${appleScriptString(query)}) then
           set outputText to outputText & noteId & (ASCII character 30) & noteName & (ASCII character 30) & targetFolder & (ASCII character 30) & noteBody & (ASCII character 30)
         end if
       end ignoring
@@ -177,6 +177,53 @@ end tell`;
   getNoteContent(title: string): string {
     const result = runAppleScript(this.noteByTitle(title));
     return result.success ? decodeBody(result.output) : "";
+  }
+
+
+  getNoteContentById(id: string): string {
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    get body of first note whose id is ${appleScriptString(id)}
+  end tell
+end tell`;
+    const result = runAppleScript(script);
+    return result.success ? decodeBody(result.output) : "";
+  }
+
+  updateNoteById(id: string, content: string): boolean {
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    set body of first note whose id is ${appleScriptString(id)} to ${appleScriptString(htmlBody(content))}
+  end tell
+end tell`;
+    return runAppleScript(script).success;
+  }
+
+  appendNoteById(id: string, content: string): boolean {
+    const current = this.getNoteContentById(id);
+    if (!current) return false;
+    return this.updateNoteById(id, current + (current.endsWith("\n") ? "" : "\n") + content);
+  }
+
+  moveNoteById(id: string, folder: string): boolean {
+    if (!this.ensureFolder(folder)) return false;
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    set targetNote to first note whose id is ${appleScriptString(id)}
+    set targetFolder to folder ${appleScriptString(folder)}
+    move targetNote to targetFolder
+  end tell
+end tell`;
+    return runAppleScript(script).success;
+  }
+
+  deleteNoteById(id: string): boolean {
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    delete first note whose id is ${appleScriptString(id)}
+  end tell
+end tell`;
+    return runAppleScript(script).success;
   }
 
   updateNote(title: string, content: string): boolean {
