@@ -60,7 +60,7 @@ server.tool(
     folder: z.enum(folders as [string, ...string[]]).optional(),
     limit: z.number().int().min(1).max(500).optional()
   },
-  async ({ folder, limit = 100 }) => {
+  async ({ folder, limit = 100 }: any) => {
     const found = notes.listNotes(folder, limit);
     return textResult(found.length
       ? found.map(n => `• ${n.title} — ${n.folder ?? "Unknown folder"}`).join("\n")
@@ -74,7 +74,7 @@ server.tool(
     title: z.string().min(1),
     folder: z.enum(folders as [string, ...string[]])
   },
-  async ({ title, folder }) => {
+  async ({ title, folder }: any) => {
     const match = notes.searchNotes(title, undefined, 10).find(n => n.title.toLowerCase() === title.toLowerCase());
     return (match ? notes.moveNoteById(match.id, folder) : notes.moveNote(title, folder))
       ? textResult(`Brain entry moved to "${folder}": "${title}"`)
@@ -85,7 +85,7 @@ server.tool(
 server.tool(
   "brain-note-id",
   { title: z.string().min(1) },
-  async ({ title }) => {
+  async ({ title }: any) => {
     const id = notes.getNoteId(title);
     return id ? textResult(id) : textResult(`Note not found: "${title}"`, true);
   }
@@ -98,7 +98,7 @@ server.tool(
     folder: z.string().optional(),
     limit: z.number().int().min(1).max(50).optional()
   },
-  async ({ query, folder, limit = 25 }) => {
+  async ({ query, folder, limit = 25 }: any) => {
     const found = notes.searchNotes(query, folder, limit);
     return textResult(found.length
       ? JSON.stringify(found.map(n => ({ id: n.id, title: n.title, folder: n.folder, snippet: n.content.slice(0, 240).replace(/\\s+/g, " ").trim() })), null, 2)
@@ -109,7 +109,7 @@ server.tool(
 server.tool(
   "brain-read",
   { title: z.string().min(1) },
-  async ({ title }) => {
+  async ({ title }: any) => {
     const match = notes.searchNotes(title, undefined, 10).find(n => n.title.toLowerCase() === title.toLowerCase());
     const content = match ? notes.getNoteContentById(match.id) : notes.getNoteContent(title);
     return content ? textResult(content) : textResult(`Brain entry not found: "${title}"`, true);
@@ -126,7 +126,7 @@ server.tool(
     tags: z.array(z.string()).optional(),
     status: z.string().optional()
   },
-  async ({ title, content, folder, type, tags = [], status }) => {
+  async ({ title, content, folder, type, tags = [], status }: any) => {
     const fullContent = brainTemplate(type, content, folder, tags, status ?? "Active");
     const created = notes.createNote(title, fullContent, tags, folder);
     return created
@@ -142,7 +142,7 @@ server.tool(
     id: z.string().optional(),
     content: z.string().min(1)
   },
-  async ({ title, id, content }) => {
+  async ({ title, id, content }: any) => {
     let updated = false;
     if (id) {
       updated = brain.updateEntryById(id, content);
@@ -162,7 +162,7 @@ server.tool(
     title: z.string().min(1),
     content: z.string().min(1)
   },
-  async ({ title, content }) => {
+  async ({ title, content }: any) => {
     const match = notes.searchNotes(title, undefined, 10).find(n => n.title.toLowerCase() === title.toLowerCase());
     return (match ? notes.appendNoteById(match.id, content) : notes.appendNote(title, content))
       ? textResult(`Added to Brain entry: "${title}"`)
@@ -173,7 +173,7 @@ server.tool(
 server.tool(
   "brain-delete",
   { title: z.string().min(1) },
-  async ({ title }) => {
+  async ({ title }: any) => {
     const match = notes.searchNotes(title, undefined, 10).find(n => n.title.toLowerCase() === title.toLowerCase());
     return (match ? notes.deleteNoteById(match.id) : notes.deleteNote(title))
       ? textResult(`Brain entry deleted: "${title}"`)
@@ -216,7 +216,7 @@ server.tool(
     nextActions: z.array(z.string()).default([]),
     brainReferences: z.array(z.string()).default([])
   },
-  async (input) => {
+  async (input: any) => {
     const handoff = [
       "# THREAD CONTEXT HANDOFF",
       "",
@@ -224,25 +224,25 @@ server.tool(
       "",
       "## CURRENT STATE", input.currentState,
       "",
-      "## KEY DECISIONS", ...input.keyDecisions.map(x => `- ${x}`),
+      "## KEY DECISIONS", ...input.keyDecisions.map((x: any) => `- ${x}`),
       "",
-      "## IMPORTANT FACTS", ...input.importantFacts.map(x => `- ${x}`),
+      "## IMPORTANT FACTS", ...input.importantFacts.map((x: any) => `- ${x}`),
       "",
-      "## USER PREFERENCES", ...input.preferences.map(x => `- ${x}`),
+      "## USER PREFERENCES", ...input.preferences.map((x: any) => `- ${x}`),
       "",
-      "## CONSTRAINTS", ...input.constraints.map(x => `- ${x}`),
+      "## CONSTRAINTS", ...input.constraints.map((x: any) => `- ${x}`),
       "",
-      "## PROBLEMS", ...input.problems.map(x => `- ${x}`),
+      "## PROBLEMS", ...input.problems.map((x: any) => `- ${x}`),
       "",
-      "## ATTEMPTS + RESULTS", ...input.attemptsAndResults.map(x => `- ${x}`),
+      "## ATTEMPTS + RESULTS", ...input.attemptsAndResults.map((x: any) => `- ${x}`),
       "",
-      "## REASONING / WHY", ...input.reasoning.map(x => `- ${x}`),
+      "## REASONING / WHY", ...input.reasoning.map((x: any) => `- ${x}`),
       "",
-      "## OPEN QUESTIONS", ...input.openQuestions.map(x => `- ${x}`),
+      "## OPEN QUESTIONS", ...input.openQuestions.map((x: any) => `- ${x}`),
       "",
-      "## NEXT ACTIONS", ...input.nextActions.map(x => `- ${x}`),
+      "## NEXT ACTIONS", ...input.nextActions.map((x: any) => `- ${x}`),
       "",
-      "## BRAIN REFERENCES", ...input.brainReferences.map(x => `- ${x}`)
+      "## BRAIN REFERENCES", ...input.brainReferences.map((x: any) => `- ${x}`)
     ].join("\n");
     return textResult(handoff);
   }
