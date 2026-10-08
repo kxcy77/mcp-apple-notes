@@ -40,6 +40,48 @@ server.tool(
 );
 
 server.tool(
+  "brain-init",
+  {},
+  async () => {
+    const existing = notes.listFolders();
+    const created = folders.filter(folder => !existing.some(name => name.toLowerCase() === folder.toLowerCase()))
+      .filter(folder => notes.ensureFolder(folder));
+    return textResult(JSON.stringify({
+      initialized: folders,
+      created,
+      alreadyPresent: folders.filter(folder => existing.some(name => name.toLowerCase() === folder.toLowerCase()))
+    }, null, 2));
+  }
+);
+
+server.tool(
+  "brain-list",
+  {
+    folder: z.enum(folders as [string, ...string[]]).optional(),
+    limit: z.number().int().min(1).max(500).optional()
+  },
+  async ({ folder, limit = 100 }) => {
+    const found = notes.listNotes(folder, limit);
+    return textResult(found.length
+      ? found.map(n => `• ${n.title} — ${n.folder ?? "Unknown folder"}`).join("\n")
+      : "No Brain entries found.");
+  }
+);
+
+server.tool(
+  "brain-move",
+  {
+    title: z.string().min(1),
+    folder: z.enum(folders as [string, ...string[]])
+  },
+  async ({ title, folder }) => {
+    return notes.moveNote(title, folder)
+      ? textResult(`Brain entry moved to "${folder}": "${title}"`)
+      : textResult(`Failed to move Brain entry: "${title}"`, true);
+  }
+);
+
+server.tool(
   "brain-note-id",
   { title: z.string().min(1) },
   async ({ title }) => {
