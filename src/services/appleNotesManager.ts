@@ -132,6 +132,45 @@ end tell`;
       }));
   }
 
+  getNoteContentById(id: string): string {
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    get body of first note whose id is ${appleScriptString(id)}
+  end tell
+end tell`;
+    const result = runAppleScript(script);
+    return result.success ? decodeBody(result.output) : "";
+  }
+
+  updateNoteById(id: string, content: string): boolean {
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    set body of first note whose id is ${appleScriptString(id)} to ${appleScriptString(htmlBody(content))}
+  end tell
+end tell`;
+    return runAppleScript(script).success;
+  }
+
+  moveNoteById(id: string, folder: string): boolean {
+    if (!this.ensureFolder(folder)) return false;
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    set targetNote to first note whose id is ${appleScriptString(id)}
+    set targetFolder to folder ${appleScriptString(folder)}
+    move targetNote to targetFolder
+  end tell
+end tell`;
+    return runAppleScript(script).success;
+  }
+
+  deleteNoteById(id: string): boolean {
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    delete first note whose id is ${appleScriptString(id)}
+  end tell
+end tell`;
+    return runAppleScript(script).success;
+  }
   moveNote(title: string, folder: string): boolean {
     if (!this.ensureFolder(folder)) return false;
     const script = `tell application "Notes"
