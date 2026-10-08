@@ -78,6 +78,35 @@ export class BrainService {
     };
   }
 
+  updateEntryById(
+    id: string,
+    content: string,
+    metadata?: { type?: string; folder?: string; tags?: string[]; status?: string }
+  ): boolean {
+    const existing = this.notes.getNoteContentById(id);
+    if (!existing) return false;
+
+    const lines = existing.split("\n");
+    const header = new Map<string, string>();
+    let bodyStart = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const match = lines[i].match(/^(Type|Folder|Status|Tags):\\s*(.*)$/);
+      if (!match) {
+        bodyStart = lines[i].trim() === "" ? i + 1 : i;
+        break;
+      }
+      header.set(match[1], match[2]);
+    }
+
+    const type = metadata?.type ?? header.get("Type") ?? "life";
+    const folder = metadata?.folder ?? header.get("Folder") ?? "01 - LIFE";
+    const status = metadata?.status ?? header.get("Status") ?? "Active";
+    const tags = metadata?.tags ?? (header.get("Tags") ?? "").split(/\\s+/).filter(Boolean);
+
+    return this.notes.updateNoteById(id, brainTemplate(type, content, folder, tags, status));
+  }
+
   upsert(title: string, content: string):
     { action: "updated" | "created" | "failed"; title: string } {
     const exact = this.notes.searchNotes(title, undefined, 10)
