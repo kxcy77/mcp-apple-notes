@@ -90,86 +90,37 @@ end tell`;
   }
 
   searchNotes(query: string, folder?: string, limit = 25): Note[] {
-    const q = query.toLowerCase();
-    const folderFilter = folder
-      ? `if name of targetFolder is ${appleScriptString(folder)} then`
-      : "";
-
     const script = `tell application "Notes"
-  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+  tell account \${appleScriptString(ICLOUD_ACCOUNT)}
     set outputText to ""
     repeat with n in notes
-      set noteName to name of n
-      set noteBody to body of n
-      set targetFolder to container of n
-      ${folderFilter}
-        if ((noteName as text) contains ${appleScriptString(query)}) or ((noteBody as text) contains ${appleScriptString(query)}) then
-          set outputText to outputText & noteName & (ASCII character 30)
+      set noteName to name of n as text
+      set noteBody to body of n as text
+      set targetFolder to name of container of n as text
+      set noteId to id of n as text
+      ignoring case
+        if (noteName contains \${appleScriptString(query)}) or (noteBody contains \${appleScriptString(query)}) then
+          set outputText to outputText & noteId & (ASCII character 30) & noteName & (ASCII character 30) & targetFolder & (ASCII character 30) & noteBody & (ASCII character 30)
         end if
-      ${folder ? "end if" : ""}
+      end ignoring
     end repeat
     return outputText
   end tell
 end tell`;
 
     const result = runAppleScript(script);
-    if (!result.success) return [];
+    if (!result.success || !result.output) return [];
 
-    return result.output
-      .split(RESULT_SEPARATOR)
-      .map(title => title.trim())
-      .filter(Boolean)
-      .filter(title => title.toLowerCase().includes(q) || q.length > 0)
-      .slice(0, limit)
-      .map(title => ({
-        id: this.stableId(title),
-        title,
-        content: "",
-        tags: [],
-        folder,
-        created: new Date(0),
-        modified: new Date()
-      }));
-  }
-
-  getNoteContentById(id: string): string {
-    const script = `tell application "Notes"
-  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
-    get body of first note whose id is ${appleScriptString(id)}
-  end tell
-end tell`;
-    const result = runAppleScript(script);
-    return result.success ? decodeBody(result.output) : "";
-  }
-
-  updateNoteById(id: string, content: string): boolean {
-    const script = `tell application "Notes"
-  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
-    set body of first note whose id is ${appleScriptString(id)} to ${appleScriptString(htmlBody(content))}
-  end tell
-end tell`;
-    return runAppleScript(script).success;
-  }
-
-  moveNoteById(id: string, folder: string): boolean {
-    if (!this.ensureFolder(folder)) return false;
-    const script = `tell application "Notes"
-  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
-    set targetNote to first note whose id is ${appleScriptString(id)}
-    set targetFolder to folder ${appleScriptString(folder)}
-    move targetNote to targetFolder
-  end tell
-end tell`;
-    return runAppleScript(script).success;
-  }
-
-  deleteNoteById(id: string): boolean {
-    const script = `tell application "Notes"
-  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
-    delete first note whose id is ${appleScriptString(id)}
-  end tell
-end tell`;
-    return runAppleScript(script).success;
+    const parts = result.output.split(RESULT_SEPARATOR);
+    const out: Note[] = [];
+    for (let i = 0; i + 3 < parts.length && out.length < limit; i += 4) {
+      const [id, title, noteFolder, rawBody] = parts.slice(i, i + 4).map(value => value.trim());
+      if (!id || !title) continue;
+      if (folder && noteFolder.toLowerCase() !== folder.toLowerCase()) continue;
+      const content = decodeBody(rawBody);
+      out.push({ id, title, content, tags: [], folder: noteFolder || undefined, created: new Date(0), modified: new Date() });
+    }
+    return out;
   }
   moveNote(title: string, folder: string): boolean {
     if (!this.ensureFolder(folder)) return false;
