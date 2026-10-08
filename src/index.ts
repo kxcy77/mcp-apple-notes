@@ -4,7 +4,7 @@ import { z } from "zod";
 import { AppleNotesManager } from "@/services/appleNotesManager.js";
 import { BrainService, brainTemplate } from "@/services/brainService.js";
 
-const server = new McpServer({
+const server: any = new McpServer({
   name: "kagiso-ai-brain",
   version: "1.0.0",
   description: "Personal AI Brain backed by Apple Notes"
