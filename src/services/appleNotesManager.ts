@@ -68,6 +68,27 @@ end tell`;
     };
   }
 
+  listFolders(): string[] {
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    return name of folders
+  end tell
+end tell`;
+    const result = runAppleScript(script);
+    if (!result.success || !result.output) return [];
+    return result.output.split(",").map(x => x.trim()).filter(Boolean);
+  }
+
+  ensureFolder(folder: string): boolean {
+    if (this.listFolders().some(name => name.toLowerCase() === folder.toLowerCase())) return true;
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    make new folder with properties {name:${appleScriptString(folder)}}
+  end tell
+end tell`;
+    return runAppleScript(script).success;
+  }
+
   searchNotes(query: string, folder?: string, limit = 25): Note[] {
     const q = query.toLowerCase();
     const folderFilter = folder
@@ -109,6 +130,16 @@ end tell`;
         created: new Date(0),
         modified: new Date()
       }));
+  }
+
+  getNoteId(title: string): string {
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    get id of note ${appleScriptString(title)}
+  end tell
+end tell`;
+    const result = runAppleScript(script);
+    return result.success ? result.output : "";
   }
 
   getNoteContent(title: string): string {
