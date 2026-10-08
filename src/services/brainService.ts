@@ -1,4 +1,3 @@
-import type { Note } from "@/types.js";
 import { AppleNotesManager } from "@/services/appleNotesManager.js";
 
 export interface BrainMatch {
@@ -11,6 +10,27 @@ export interface BrainMatch {
  * BrainService adds knowledge-management rules above raw Apple Notes:
  * search first, avoid duplicate entries, and make updates explicit.
  */
+const normalizeTags = (tags: string[] = []): string[] =>
+  [...new Set(tags.map(tag => tag.trim().replace(/^#/, "")).filter(Boolean))];
+
+export const brainTemplate = (
+  type: string,
+  content: string,
+  folder: string,
+  tags: string[] = [],
+  status = "Active"
+): string => {
+  const tagLine = normalizeTags(tags).map(tag => `#${tag}`).join(" ");
+  return [
+    `Type: ${type}`,
+    `Folder: ${folder}`,
+    `Status: ${status}`,
+    tagLine ? `Tags: ${tagLine}` : "",
+    "",
+    content.trim()
+  ].filter(Boolean).join("\n");
+};
+
 export class BrainService {
   constructor(private readonly notes: AppleNotesManager) {}
 
