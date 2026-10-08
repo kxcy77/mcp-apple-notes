@@ -75,7 +75,8 @@ server.tool(
     folder: z.enum(folders as [string, ...string[]])
   },
   async ({ title, folder }) => {
-    return notes.moveNote(title, folder)
+    const match = notes.searchNotes(title, undefined, 10).find(n => n.title.toLowerCase() === title.toLowerCase());
+    return (match ? notes.moveNoteById(match.id, folder) : notes.moveNote(title, folder))
       ? textResult(`Brain entry moved to "${folder}": "${title}"`)
       : textResult(`Failed to move Brain entry: "${title}"`, true);
   }
@@ -100,7 +101,7 @@ server.tool(
   async ({ query, folder, limit = 25 }) => {
     const found = notes.searchNotes(query, folder, limit);
     return textResult(found.length
-      ? found.map(n => `• ${n.title}${n.folder ? ` — ${n.folder}` : ""}`).join("\n")
+      ? JSON.stringify(found.map(n => ({ id: n.id, title: n.title, folder: n.folder, snippet: n.content.slice(0, 240).replace(/\\s+/g, " ").trim() })), null, 2)
       : "No Brain entries found.");
   }
 );
@@ -109,7 +110,8 @@ server.tool(
   "brain-read",
   { title: z.string().min(1) },
   async ({ title }) => {
-    const content = notes.getNoteContent(title);
+    const match = notes.searchNotes(title, undefined, 10).find(n => n.title.toLowerCase() === title.toLowerCase());
+    const content = match ? notes.getNoteContentById(match.id) : notes.getNoteContent(title);
     return content ? textResult(content) : textResult(`Brain entry not found: "${title}"`, true);
   }
 );
@@ -157,7 +159,8 @@ server.tool(
     content: z.string().min(1)
   },
   async ({ title, content }) => {
-    return notes.appendNote(title, content)
+    const match = notes.searchNotes(title, undefined, 10).find(n => n.title.toLowerCase() === title.toLowerCase());
+    return (match ? notes.appendNoteById(match.id, content) : notes.appendNote(title, content))
       ? textResult(`Added to Brain entry: "${title}"`)
       : textResult(`Failed to append to Brain entry: "${title}"`, true);
   }
@@ -167,7 +170,8 @@ server.tool(
   "brain-delete",
   { title: z.string().min(1) },
   async ({ title }) => {
-    return notes.deleteNote(title)
+    const match = notes.searchNotes(title, undefined, 10).find(n => n.title.toLowerCase() === title.toLowerCase());
+    return (match ? notes.deleteNoteById(match.id) : notes.deleteNote(title))
       ? textResult(`Brain entry deleted: "${title}"`)
       : textResult(`Failed to delete Brain entry: "${title}"`, true);
   }
