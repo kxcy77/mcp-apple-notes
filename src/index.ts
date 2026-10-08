@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { AppleNotesManager } from "@/services/appleNotesManager.js";
+import { BrainService } from "@/services/brainService.js";
 
 const server = new McpServer({
   name: "kagiso-ai-brain",
@@ -10,6 +11,7 @@ const server = new McpServer({
 });
 
 const notes = new AppleNotesManager();
+const brain = new BrainService(notes);
 
 const folders = [
   "00 - CORE", "01 - LIFE", "02 - GOALS", "03 - PROJECTS",
