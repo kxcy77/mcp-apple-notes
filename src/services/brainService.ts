@@ -1,7 +1,10 @@
 import { AppleNotesManager } from "@/services/appleNotesManager.js";
 
 export interface BrainMatch {
+  id: string;
   title: string;
+  folder?: string;
+  snippet: string;
   score: number;
   reason: string;
 }
@@ -43,7 +46,10 @@ export class BrainService {
       const overlap = terms.filter(term => titleTerms.includes(term)).length;
       const score = terms.length ? overlap / terms.length : 0;
       return {
+        id: note.id,
         title: note.title,
+        folder: note.folder,
+        snippet: note.content.slice(0, 240).replace(/\\s+/g, " ").trim(),
         score,
         reason: score >= 0.75 ? "strong title match" : score >= 0.4 ? "partial title match" : "search match"
       };
@@ -56,7 +62,7 @@ export class BrainService {
       .find(note => note.title.toLowerCase() === title.toLowerCase());
 
     if (exact) {
-      return { action: "duplicate", title: exact.title, matches: [{ title: exact.title, score: 1, reason: "exact title already exists" }] };
+      return { action: "duplicate", title: exact.title, matches: [{ id: exact.id, title: exact.title, folder: exact.folder, snippet: exact.content.slice(0, 240).replace(/\\s+/g, " ").trim(), score: 1, reason: "exact title already exists" }] };
     }
 
     const related = this.findRelated(title, folder, 5);
@@ -79,7 +85,7 @@ export class BrainService {
 
     if (exact) {
       return {
-        action: this.notes.updateNote(exact.title, content) ? "updated" : "failed",
+        action: this.notes.updateNoteById(exact.id, content) ? "updated" : "failed",
         title: exact.title
       };
     }
