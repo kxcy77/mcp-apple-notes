@@ -132,6 +132,18 @@ end tell`;
       }));
   }
 
+  moveNote(title: string, folder: string): boolean {
+    if (!this.ensureFolder(folder)) return false;
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    set targetNote to note ${appleScriptString(title)}
+    set targetFolder to folder ${appleScriptString(folder)}
+    move targetNote to targetFolder
+  end tell
+end tell`;
+    return runAppleScript(script).success;
+  }
+
   getNoteId(title: string): string {
     const script = `tell application "Notes"
   tell account ${appleScriptString(ICLOUD_ACCOUNT)}
@@ -140,6 +152,36 @@ end tell`;
 end tell`;
     const result = runAppleScript(script);
     return result.success ? result.output : "";
+  }
+
+  listNotes(folder?: string, limit = 100): Note[] {
+    const folderClause = folder ? `whose name of container is ${appleScriptString(folder)}` : "";
+    const script = `tell application "Notes"
+  tell account ${appleScriptString(ICLOUD_ACCOUNT)}
+    set outputText to ""
+    repeat with n in notes ${folderClause}
+      set outputText to outputText & (name of n) & (ASCII character 30) & (name of container of n) & (ASCII character 30)
+    end repeat
+    return outputText
+  end tell
+end tell`;
+    const result = runAppleScript(script);
+    if (!result.success || !result.output) return [];
+
+    const parts = result.output.split(RESULT_SEPARATOR).map(x => x.trim()).filter(Boolean);
+    const out: Note[] = [];
+    for (let i = 0; i + 1 < parts.length && out.length < limit; i += 2) {
+      out.push({
+        id: this.stableId(parts[i]),
+        title: parts[i],
+        content: "",
+        tags: [],
+        folder: parts[i + 1],
+        created: new Date(0),
+        modified: new Date()
+      });
+    }
+    return out;
   }
 
   getNoteContent(title: string): string {
