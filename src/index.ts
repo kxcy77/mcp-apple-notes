@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { AppleNotesManager } from "@/services/appleNotesManager.js";
-import { BrainService } from "@/services/brainService.js";
+import { BrainService, brainTemplate } from "@/services/brainService.js";
 
 const server = new McpServer({
   name: "kagiso-ai-brain",
@@ -120,11 +120,12 @@ server.tool(
     title: z.string().min(1),
     content: z.string().min(1),
     folder: z.enum(folders as [string, ...string[]]).default("01 - LIFE"),
+    type: z.string().default("life"),
     tags: z.array(z.string()).optional(),
     status: z.string().optional()
   },
-  async ({ title, content, folder, tags = [], status }) => {
-    const fullContent = status ? `Status: ${status}\n\n${content}` : content;
+  async ({ title, content, folder, type, tags = [], status }) => {
+    const fullContent = brainTemplate(type, content, folder, tags, status ?? "Active");
     const created = notes.createNote(title, fullContent, tags, folder);
     return created
       ? textResult(`Brain entry created: "${title}"`)
