@@ -45,7 +45,7 @@ export class BrainService {
       const contentTerms = this.tokens(note.content);
       const body = note.content.toLowerCase();
       const folderText = (note.folder ?? "").toLowerCase();
-      const tagLine = this.metadataValue(note.content, "Tags").toLowerCase();
+      const tagLine = (this.metadataValue(note.content, "Tags") ?? "").toLowerCase();
       const exactPhrase = query.trim().length >= 3 && body.includes(query.trim().toLowerCase());
 
       const titleOverlap = this.overlap(terms, titleTerms);
