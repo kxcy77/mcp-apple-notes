@@ -16,4 +16,4 @@ jobs:
           node-version: 22
           cache: yarn
       - run: yarn install --frozen-lockfile
-      - run: yarn build
+      - run: NODE_OPTIONS=--max-old-space-size=6144 yarn build
