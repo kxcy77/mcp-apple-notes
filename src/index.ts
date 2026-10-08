@@ -143,9 +143,13 @@ server.tool(
     content: z.string().min(1)
   },
   async ({ title, id, content }) => {
-    const updated = id
-      ? notes.updateNoteById(id, content)
-      : notes.updateNote(title, content);
+    let updated = false;
+    if (id) {
+      updated = brain.updateEntryById(id, content);
+    } else {
+      const match = notes.searchNotes(title, undefined, 10).find(n => n.title.toLowerCase() === title.toLowerCase());
+      updated = match ? brain.updateEntryById(match.id, content) : notes.updateNote(title, content);
+    }
     return updated
       ? textResult(`Brain entry updated: "${title}"${id ? ` (ID: ${id})` : ""}`)
       : textResult(`Failed to update Brain entry: "${title}"`, true);
