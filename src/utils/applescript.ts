@@ -1,35 +1,29 @@
-import { execSync } from 'child_process';
-import type { AppleScriptResult } from '@/types.js';
+import { spawnSync } from "child_process";
+import type { AppleScriptResult } from "@/types.js";
 
 /**
- * Executes an AppleScript command and returns the result
- * @param script - The AppleScript command to execute
- * @returns Object containing success status and output/error
+ * Execute AppleScript without passing the script through a shell.
+ * This avoids shell quoting/injection problems when note content contains
+ * apostrophes, quotes, newlines, or other user-controlled text.
  */
 export function runAppleScript(script: string): AppleScriptResult {
-  try {
-    // Trim and sanitize the script
-    const sanitizedScript = script.trim().replace(/[\r\n]+/g, ' ');
+  const result = spawnSync("osascript", ["-e", script.trim()], {
+    encoding: "utf8",
+    timeout: 15000,
+    maxBuffer: 10 * 1024 * 1024
+  });
 
-    // Execute the AppleScript command
-    const output = execSync(`osascript -e '${sanitizedScript}'`, {
-      encoding: 'utf8',
-      timeout: 10000 // 10 second timeout
-    });
+  if (result.error) {
+    return { success: false, output: "", error: result.error.message };
+  }
 
-    return {
-      success: true,
-      output: output.trim()
-    };
-  } catch (error) {
-    console.error('AppleScript execution failed:', error);
-
+  if (result.status !== 0) {
     return {
       success: false,
-      output: '',
-      error: error instanceof Error
-        ? error.message
-        : 'Unknown error occurred while executing AppleScript'
+      output: "",
+      error: (result.stderr || "AppleScript execution failed").trim()
     };
   }
+
+  return { success: true, output: (result.stdout || "").trim() };
 }
